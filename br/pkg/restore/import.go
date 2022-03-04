@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -23,6 +24,9 @@ import (
 	"github.com/pingcap/tidb/br/pkg/logutil"
 	"github.com/pingcap/tidb/br/pkg/summary"
 	"github.com/pingcap/tidb/br/pkg/utils"
+	"github.com/pingcap/tidb/parser"
+	"github.com/pingcap/tidb/util/resourcegrouptag"
+	"github.com/pingcap/tipb/go-tipb"
 	pd "github.com/tikv/pd/client"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -471,13 +475,19 @@ func (importer *FileImporter) downloadSST(
 		NewKeyPrefix: encodeKeyPrefix(fileRule.GetNewKeyPrefix()),
 	}
 	sstMeta := GetSSTMetaFromFile(id, file, regionInfo.Region, &rule)
-
+	rawSQL := "test download sst command from BR"
+	_, sqlDigest := parser.NormalizeDigest(rawSQL)
+	fmt.Printf("sqlDigest: %+v\n", sqlDigest.String())
+	tag := resourcegrouptag.EncodeResourceGroupTag(sqlDigest, nil, tipb.ResourceGroupTagLabel_ResourceGroupTagLabelRow)
 	req := &import_sstpb.DownloadRequest{
 		Sst:            sstMeta,
 		StorageBackend: importer.backend,
 		Name:           file.GetName(),
 		RewriteRule:    rule,
 		CipherInfo:     cipher,
+		Context: &kvrpcpb.Context{
+			ResourceGroupTag: tag,
+		},
 	}
 	log.Debug("download SST",
 		logutil.SSTMeta(&sstMeta),

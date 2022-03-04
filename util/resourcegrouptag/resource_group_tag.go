@@ -24,6 +24,12 @@ import (
 	"github.com/tikv/client-go/v2/tikvrpc"
 )
 
+const (
+	BackupResourceGroupTag  = "backup"
+	RestoreResourceGroupTag = "restore"
+	ImportResourceGroupTag  = "import"
+)
+
 // EncodeResourceGroupTag encodes sql digest and plan digest into resource group tag.
 func EncodeResourceGroupTag(sqlDigest, planDigest *parser.Digest, label tipb.ResourceGroupTagLabel) []byte {
 	if sqlDigest == nil && planDigest == nil {
@@ -127,4 +133,24 @@ func GetFirstKeyFromRequest(req *tikvrpc.Request) (firstKey []byte) {
 		}
 	}
 	return
+}
+
+func GetBRIEResourceGroupTag(cmd, typ string) *tipb.ResourceGroupTag {
+	switch typ {
+	case RestoreResourceGroupTag:
+		tagOneOf := &tipb.ResourceGroupTag_RestoreCmd{
+			RestoreCmd: []byte(cmd),
+		}
+		return &tipb.ResourceGroupTag{
+			TagOneof: tagOneOf,
+		}
+	case BackupResourceGroupTag:
+		tagOneOf := &tipb.ResourceGroupTag_BackupCmd{
+			BackupCmd: []byte(cmd),
+		}
+		return &tipb.ResourceGroupTag{
+			TagOneof: tagOneOf,
+		}
+	}
+	return nil
 }
