@@ -30,7 +30,19 @@ func runRestoreCommand(command *cobra.Command, cmdName string) error {
 		ctx, store = trace.TracerStartSpan(ctx)
 		defer trace.TracerFinishSpan(ctx, store)
 	}
-	if err := task.RunRestore(GetDefaultContext(), tidbGlue, cmdName, &cfg); err != nil {
+	var (
+		dbName, tableName string
+	)
+	tableName = command.Flag("table").Value.String()
+	dbName = command.Flag("db").Value.String()
+	rawCmd := cmdName
+	if dbName != "" {
+		rawCmd += " --db " + dbName
+	}
+	if tableName != "" {
+		rawCmd += " --table " + tableName
+	}
+	if err := task.RunRestore(GetDefaultContext(), tidbGlue, rawCmd, &cfg); err != nil {
 		log.Error("failed to restore", zap.Error(err))
 		return errors.Trace(err)
 	}
@@ -52,7 +64,19 @@ func runRestoreRawCommand(command *cobra.Command, cmdName string) error {
 		ctx, store = trace.TracerStartSpan(ctx)
 		defer trace.TracerFinishSpan(ctx, store)
 	}
-	if err := task.RunRestoreRaw(GetDefaultContext(), gluetikv.Glue{}, cmdName, &cfg); err != nil {
+	var (
+		dbName, tableName string
+	)
+	tableName = command.Flag("table").Value.String()
+	dbName = command.Flag("db").Value.String()
+	rawCmd := cmdName
+	if dbName != "" {
+		rawCmd += " --db " + dbName
+	}
+	if tableName != "" {
+		rawCmd += " --table " + tableName
+	}
+	if err := task.RunRestoreRaw(GetDefaultContext(), gluetikv.Glue{}, rawCmd, &cfg); err != nil {
 		log.Error("failed to restore raw kv", zap.Error(err))
 		return errors.Trace(err)
 	}
@@ -65,7 +89,7 @@ func NewRestoreCommand() *cobra.Command {
 		Use:          "restore",
 		Short:        "restore a TiDB/TiKV cluster",
 		SilenceUsage: true,
-		PersistentPreRunE: func(c *cobra.Command, args []string) error {
+		PersistentPreRunE: func(c *cobra.Command, _ []string) error {
 			if err := Init(c); err != nil {
 				return errors.Trace(err)
 			}

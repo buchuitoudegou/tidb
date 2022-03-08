@@ -136,20 +136,23 @@ func GetFirstKeyFromRequest(req *tikvrpc.Request) (firstKey []byte) {
 }
 
 func GetBRIEResourceGroupTag(cmd, typ string) *tipb.ResourceGroupTag {
+	sqlDigest, _ := parser.NormalizeDigest(cmd)
 	switch typ {
 	case RestoreResourceGroupTag:
 		tagOneOf := &tipb.ResourceGroupTag_RestoreCmd{
 			RestoreCmd: []byte(cmd),
 		}
 		return &tipb.ResourceGroupTag{
-			TagOneof: tagOneOf,
+			SqlDigest: []byte(sqlDigest),
+			TagOneof:  tagOneOf,
 		}
 	case BackupResourceGroupTag:
 		tagOneOf := &tipb.ResourceGroupTag_BackupCmd{
 			BackupCmd: []byte(cmd),
 		}
 		return &tipb.ResourceGroupTag{
-			TagOneof: tagOneOf,
+			SqlDigest: []byte(sqlDigest),
+			TagOneof:  tagOneOf,
 		}
 	}
 	return nil

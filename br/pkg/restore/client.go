@@ -99,6 +99,7 @@ type Client struct {
 	dom          *domain.Domain
 
 	batchDdlSize uint
+	rawCommand   string
 }
 
 // NewRestoreClient returns a new RestoreClient.
@@ -109,6 +110,7 @@ func NewRestoreClient(
 	tlsConf *tls.Config,
 	keepaliveConf keepalive.ClientParameters,
 	isRawKv bool,
+	rawCommand string,
 ) (*Client, error) {
 	db, err := NewDB(g, store)
 	if err != nil {
@@ -134,6 +136,7 @@ func NewRestoreClient(
 		switchCh:      make(chan struct{}),
 		dom:           dom,
 		statsHandler:  statsHandle,
+		rawCommand:    rawCommand,
 	}, nil
 }
 
@@ -222,7 +225,7 @@ func (rc *Client) InitBackupMeta(
 
 	metaClient := NewSplitClient(rc.pdClient, rc.tlsConf, rc.backupMeta.IsRawKv)
 	importCli := NewImportClient(metaClient, rc.tlsConf, rc.keepaliveConf)
-	rc.fileImporter = NewFileImporter(metaClient, importCli, backend, rc.backupMeta.IsRawKv, rc.rateLimit)
+	rc.fileImporter = NewFileImporter(metaClient, importCli, backend, rc.backupMeta.IsRawKv, rc.rateLimit, rc.rawCommand)
 	return rc.fileImporter.CheckMultiIngestSupport(c, rc.pdClient)
 }
 

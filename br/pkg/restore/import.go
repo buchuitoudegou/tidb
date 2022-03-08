@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -24,9 +23,7 @@ import (
 	"github.com/pingcap/tidb/br/pkg/logutil"
 	"github.com/pingcap/tidb/br/pkg/summary"
 	"github.com/pingcap/tidb/br/pkg/utils"
-	"github.com/pingcap/tidb/parser"
 	"github.com/pingcap/tidb/util/resourcegrouptag"
-	"github.com/pingcap/tipb/go-tipb"
 	pd "github.com/tikv/pd/client"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
@@ -211,6 +208,7 @@ type FileImporter struct {
 	rawStartKey        []byte
 	rawEndKey          []byte
 	supportMultiIngest bool
+	importCommand      string
 }
 
 // NewFileImporter returns a new file importClient.
@@ -220,13 +218,15 @@ func NewFileImporter(
 	backend *backuppb.StorageBackend,
 	isRawKvMode bool,
 	rateLimit uint64,
+	importCommand string,
 ) FileImporter {
 	return FileImporter{
-		metaClient:   metaClient,
-		backend:      backend,
-		importClient: importClient,
-		isRawKvMode:  isRawKvMode,
-		rateLimit:    rateLimit,
+		metaClient:    metaClient,
+		backend:       backend,
+		importClient:  importClient,
+		isRawKvMode:   isRawKvMode,
+		rateLimit:     rateLimit,
+		importCommand: importCommand,
 	}
 }
 
@@ -475,10 +475,8 @@ func (importer *FileImporter) downloadSST(
 		NewKeyPrefix: encodeKeyPrefix(fileRule.GetNewKeyPrefix()),
 	}
 	sstMeta := GetSSTMetaFromFile(id, file, regionInfo.Region, &rule)
-	rawSQL := "test download sst command from BR"
-	_, sqlDigest := parser.NormalizeDigest(rawSQL)
-	fmt.Printf("sqlDigest: %+v\n", sqlDigest.String())
-	tag := resourcegrouptag.EncodeResourceGroupTag(sqlDigest, nil, tipb.ResourceGroupTagLabel_ResourceGroupTagLabelRow)
+	tag := resourcegrouptag.GetBRIEResourceGroupTag(importer.importCommand, resourcegrouptag.RestoreResourceGroupTag)
+	byteTag, _ := tag.Marshal()
 	req := &import_sstpb.DownloadRequest{
 		Sst:            sstMeta,
 		StorageBackend: importer.backend,
@@ -486,7 +484,7 @@ func (importer *FileImporter) downloadSST(
 		RewriteRule:    rule,
 		CipherInfo:     cipher,
 		Context: &kvrpcpb.Context{
-			ResourceGroupTag: tag,
+			ResourceGroupTag: byteTag,
 		},
 	}
 	log.Debug("download SST",
