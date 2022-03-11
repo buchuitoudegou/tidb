@@ -609,10 +609,13 @@ func (importer *FileImporter) ingestSSTs(
 	if leader == nil {
 		leader = regionInfo.Region.GetPeers()[0]
 	}
+	tag := resourcegrouptag.GetBRIEResourceGroupTag(importer.importCommand, resourcegrouptag.RestoreResourceGroupTag)
+	byteTag, _ := tag.Marshal()
 	reqCtx := &kvrpcpb.Context{
-		RegionId:    regionInfo.Region.GetId(),
-		RegionEpoch: regionInfo.Region.GetRegionEpoch(),
-		Peer:        leader,
+		RegionId:         regionInfo.Region.GetId(),
+		RegionEpoch:      regionInfo.Region.GetRegionEpoch(),
+		Peer:             leader,
+		ResourceGroupTag: byteTag,
 	}
 
 	if !importer.supportMultiIngest {
