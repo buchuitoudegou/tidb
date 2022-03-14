@@ -9,6 +9,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/errors"
 	backuppb "github.com/pingcap/kvproto/pkg/brpb"
+	"github.com/pingcap/kvproto/pkg/kvrpcpb"
 	"github.com/pingcap/log"
 	"github.com/pingcap/tidb/br/pkg/backup"
 	berrors "github.com/pingcap/tidb/br/pkg/errors"
@@ -18,6 +19,7 @@ import (
 	"github.com/pingcap/tidb/br/pkg/storage"
 	"github.com/pingcap/tidb/br/pkg/summary"
 	"github.com/pingcap/tidb/br/pkg/utils"
+	"github.com/pingcap/tidb/util/resourcegrouptag"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
@@ -198,7 +200,9 @@ func RunBackupRaw(c context.Context, g glue.Glue, cmdName string, cfg *RawKvConf
 		}
 		updateCh.Inc()
 	}
-
+	rawCmd := "backup something"
+	tag := resourcegrouptag.GetBRIEResourceGroupTag(rawCmd, resourcegrouptag.BackupResourceGroupTag)
+	byteTag, _ := tag.Marshal()
 	req := backuppb.BackupRequest{
 		ClusterId:        client.GetClusterID(),
 		StartVersion:     0,
@@ -210,6 +214,9 @@ func RunBackupRaw(c context.Context, g glue.Glue, cmdName string, cfg *RawKvConf
 		CompressionType:  cfg.CompressionType,
 		CompressionLevel: cfg.CompressionLevel,
 		CipherInfo:       &cfg.CipherInfo,
+		Context: &kvrpcpb.Context{
+			ResourceGroupTag: byteTag,
+		},
 	}
 	metaWriter := metautil.NewMetaWriter(client.GetStorage(), metautil.MetaFileSize, false, &cfg.CipherInfo)
 	metaWriter.StartWriteMetasAsync(ctx, metautil.AppendDataFile)

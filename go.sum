@@ -107,6 +107,8 @@ github.com/blacktear23/go-proxyprotocol v0.0.0-20180807104634-af7a81e8dd0d h1:rQ
 github.com/blacktear23/go-proxyprotocol v0.0.0-20180807104634-af7a81e8dd0d/go.mod h1:VKt7CNAQxpFpSDz3sXyj9hY/GbVsQCr0sB3w59nE7lU=
 github.com/buchuitoudegou/kvproto v0.0.0-20220303083757-93b7c4fc6f9d h1:6h8vynzHm0zKJWC/t2nm09GL+bojnxL2sSVRZmc+7hk=
 github.com/buchuitoudegou/kvproto v0.0.0-20220303083757-93b7c4fc6f9d/go.mod h1:IOdRDPLyda8GX2hE/jO7gqaCV/PNFh8BZQCQZXfIOqI=
+github.com/buchuitoudegou/kvproto v0.0.0-20220314033633-6798bf838bf9 h1:Y9roasNCEvdR95TF1DvNbFvn74EKGMmBkdJ8jhs2ORQ=
+github.com/buchuitoudegou/kvproto v0.0.0-20220314033633-6798bf838bf9/go.mod h1:IOdRDPLyda8GX2hE/jO7gqaCV/PNFh8BZQCQZXfIOqI=
 github.com/buchuitoudegou/tipb v0.0.0-20220304091548-ce359c2cc6cb h1:5Sd5Ij//FU0PkgR/oCp2bDL2dabgI9KbrcYKHMd1e6I=
 github.com/buchuitoudegou/tipb v0.0.0-20220304091548-ce359c2cc6cb/go.mod h1:A7mrd7WHBl1o63LE2bIBGEJMTNWXqhgmYiOvMLxozfs=
 github.com/carlmjohnson/flagext v0.21.0 h1:/c4uK3ie786Z7caXLcIMvePNSSiH3bQVGDvmGLMme60=

@@ -15,6 +15,7 @@ import (
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
 	backuppb "github.com/pingcap/kvproto/pkg/brpb"
+	"github.com/pingcap/kvproto/pkg/kvrpcpb"
 	"github.com/pingcap/log"
 	"github.com/pingcap/tidb/br/pkg/backup"
 	"github.com/pingcap/tidb/br/pkg/checksum"
@@ -29,6 +30,7 @@ import (
 	"github.com/pingcap/tidb/sessionctx/stmtctx"
 	"github.com/pingcap/tidb/statistics/handle"
 	"github.com/pingcap/tidb/types"
+	"github.com/pingcap/tidb/util/resourcegrouptag"
 	"github.com/spf13/pflag"
 	"github.com/tikv/client-go/v2/oracle"
 	"go.uber.org/zap"
@@ -306,7 +308,9 @@ func RunBackup(c context.Context, g glue.Glue, cmdName string, cfg *BackupConfig
 			return errors.Trace(err)
 		}
 	}
-
+	rawCmd := "backup something"
+	tag := resourcegrouptag.GetBRIEResourceGroupTag(rawCmd, resourcegrouptag.BackupResourceGroupTag)
+	byteTag, _ := tag.Marshal()
 	req := backuppb.BackupRequest{
 		ClusterId:        client.GetClusterID(),
 		StartVersion:     cfg.LastBackupTS,
@@ -316,6 +320,9 @@ func RunBackup(c context.Context, g glue.Glue, cmdName string, cfg *BackupConfig
 		CompressionType:  cfg.CompressionType,
 		CompressionLevel: cfg.CompressionLevel,
 		CipherInfo:       &cfg.CipherInfo,
+		Context: &kvrpcpb.Context{
+			ResourceGroupTag: byteTag,
+		},
 	}
 	brVersion := g.GetVersion()
 	clusterVersion, err := mgr.GetClusterVersion(ctx)
