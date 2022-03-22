@@ -154,6 +154,14 @@ func GetBRIEResourceGroupTag(cmd, typ string) *tipb.ResourceGroupTag {
 			SqlDigest: []byte(sqlDigest),
 			TagOneof:  tagOneOf,
 		}
+	case ImportResourceGroupTag:
+		tagOneOf := &tipb.ResourceGroupTag_Import{
+			Import: []byte(cmd),
+		}
+		return &tipb.ResourceGroupTag{
+			SqlDigest: []byte(sqlDigest),
+			TagOneof:  tagOneOf,
+		}
 	}
 	return nil
 }

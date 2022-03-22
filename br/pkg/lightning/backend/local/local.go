@@ -57,6 +57,7 @@ import (
 	"github.com/pingcap/tidb/table"
 	"github.com/pingcap/tidb/tablecodec"
 	"github.com/pingcap/tidb/util/codec"
+	"github.com/pingcap/tidb/util/resourcegrouptag"
 	tikverror "github.com/tikv/client-go/v2/error"
 	"github.com/tikv/client-go/v2/oracle"
 	tikvclient "github.com/tikv/client-go/v2/tikv"
@@ -773,6 +774,11 @@ func (local *local) WriteToTiKV(
 	leaderID := region.Leader.GetId()
 	clients := make([]sst.ImportSST_WriteClient, 0, len(region.Region.GetPeers()))
 	requests := make([]*sst.WriteRequest, 0, len(region.Region.GetPeers()))
+	tag := resourcegrouptag.GetBRIEResourceGroupTag("lightning import", resourcegrouptag.ImportResourceGroupTag)
+	byteTag, _ := tag.Marshal()
+	context := kvrpcpb.Context{
+		ResourceGroupTag: byteTag,
+	}
 	for _, peer := range region.Region.GetPeers() {
 		cli, err := local.getImportClient(ctx, peer.StoreId)
 		if err != nil {
@@ -789,6 +795,7 @@ func (local *local) WriteToTiKV(
 			Chunk: &sst.WriteRequest_Meta{
 				Meta: meta,
 			},
+			Context: &context,
 		}
 		if err = wstream.Send(req); err != nil {
 			return nil, Range{}, stats, errors.Trace(err)
@@ -916,10 +923,13 @@ func (local *local) Ingest(ctx context.Context, metas []*sst.SSTMeta, region *sp
 	if err != nil {
 		return nil, err
 	}
+	tag := resourcegrouptag.GetBRIEResourceGroupTag("lightning import", resourcegrouptag.ImportResourceGroupTag)
+	byteTag, _ := tag.Marshal()
 	reqCtx := &kvrpcpb.Context{
-		RegionId:    region.Region.GetId(),
-		RegionEpoch: region.Region.GetRegionEpoch(),
-		Peer:        leader,
+		RegionId:         region.Region.GetId(),
+		RegionEpoch:      region.Region.GetRegionEpoch(),
+		Peer:             leader,
+		ResourceGroupTag: byteTag,
 	}
 
 	if !local.supportMultiIngest {
